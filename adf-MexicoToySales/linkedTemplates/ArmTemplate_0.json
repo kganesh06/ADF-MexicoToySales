@@ -125,6 +125,47 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/ds_adls_Inventory')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_adls_rawdata",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "inventory.csv",
+						"fileSystem": "rawdata"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "Store_ID",
+						"type": "String"
+					},
+					{
+						"name": "Product_ID",
+						"type": "String"
+					},
+					{
+						"name": "Stock_On_Hand",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_adls_rawdata')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/ds_adls_processdata_products')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -228,6 +269,104 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/ds_adls_sales')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_adls_rawdata",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "sales.csv",
+						"fileSystem": "rawdata"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "Sale_ID",
+						"type": "String"
+					},
+					{
+						"name": "Date",
+						"type": "String"
+					},
+					{
+						"name": "Store_ID",
+						"type": "String"
+					},
+					{
+						"name": "Product_ID",
+						"type": "String"
+					},
+					{
+						"name": "Units",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_adls_rawdata')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_adls_store')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_adls_rawdata",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "stores.csv",
+						"fileSystem": "rawdata"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "Store_ID",
+						"type": "String"
+					},
+					{
+						"name": "Store_Name",
+						"type": "String"
+					},
+					{
+						"name": "Store_City",
+						"type": "String"
+					},
+					{
+						"name": "Store_Location",
+						"type": "String"
+					},
+					{
+						"name": "Store_Open_Date",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_adls_rawdata')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/Ingest_toySales_data')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -320,6 +459,27 @@
 								"type": "DatasetReference"
 							},
 							"name": "getProducts"
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_adls_sales",
+								"type": "DatasetReference"
+							},
+							"name": "getSales"
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_adls_Inventory",
+								"type": "DatasetReference"
+							},
+							"name": "getInventory"
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_adls_store",
+								"type": "DatasetReference"
+							},
+							"name": "getStores"
 						}
 					],
 					"sinks": [
@@ -337,6 +497,15 @@
 						},
 						{
 							"name": "replacenulls"
+						},
+						{
+							"name": "removeNullSales"
+						},
+						{
+							"name": "join1"
+						},
+						{
+							"name": "select1"
 						}
 					],
 					"scriptLines": [
@@ -344,14 +513,62 @@
 						"          Product_ID as string,",
 						"          Product_Name as string,",
 						"          Product_Category as string,",
-						"          Product_Cost as string,",
-						"          Product_Price as string",
+						"          Product_Cost as double,",
+						"          Product_Price as double",
 						"     ),",
 						"     allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     ignoreNoFilesFound: false) ~> getProducts",
+						"source(output(",
+						"          Sale_ID as string,",
+						"          Date as date 'dd/MM/yyyy',",
+						"          Store_ID as string,",
+						"          Product_ID as string,",
+						"          Units as integer",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> getSales",
+						"source(output(",
+						"          Store_ID as string,",
+						"          Product_ID as string,",
+						"          Stock_On_Hand as short",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> getInventory",
+						"source(output(",
+						"          Store_ID as string,",
+						"          Store_Name as string,",
+						"          Store_City as string,",
+						"          Store_Location as string,",
+						"          Store_Open_Date as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> getStores",
 						"getProducts filter(not(((isNull(Product_ID)) || isNull(Product_Name) || Product_ID==\"\" || Product_Name==\"\"))) ~> removeNullValues",
-						"removeNullValues derive(Product_Cost = iif(isNull(Product_Cost), \"0\", Product_Cost)) ~> replacenulls",
+						"removeNullValues derive(Product_Cost = iif(isNull(Product_Cost), toDouble(0), Product_Cost)) ~> replacenulls",
+						"getSales filter(not(isNull(Sale_ID) || Sale_ID==\"\")) ~> removeNullSales",
+						"removeNullSales, replacenulls join(getSales@Product_ID == getProducts@Product_ID,",
+						"     joinType:'left',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> join1",
+						"join1 select(mapColumn(",
+						"          Sale_ID,",
+						"          Date,",
+						"          Store_ID,",
+						"          Product_ID = getSales@Product_ID,",
+						"          Units,",
+						"          Product_ID = getProducts@Product_ID,",
+						"          Product_Name,",
+						"          Product_Category,",
+						"          Product_Cost,",
+						"          Product_Price",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select1",
 						"replacenulls sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     filePattern:'products.csv',",
@@ -365,6 +582,9 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ds_adls_prodcuts')]",
+				"[concat(variables('factoryId'), '/datasets/ds_adls_sales')]",
+				"[concat(variables('factoryId'), '/datasets/ds_adls_Inventory')]",
+				"[concat(variables('factoryId'), '/datasets/ds_adls_store')]",
 				"[concat(variables('factoryId'), '/datasets/ds_adls_processdata_products')]"
 			]
 		},
@@ -393,6 +613,9 @@
 								"parameters": {},
 								"datasetParameters": {
 									"getProducts": {},
+									"getSales": {},
+									"getInventory": {},
+									"getStores": {},
 									"processdata": {}
 								}
 							},
