@@ -1,0 +1,22 @@
+{
+	"name": "ds_adls_processdata_products",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_adls_rawdata",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "product.csv",
+				"fileSystem": "processdata"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"quoteChar": "\""
+		},
+		"schema": []
+	}
+}
