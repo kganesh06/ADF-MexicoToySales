@@ -57,9 +57,6 @@
 				},
 				{
 					"name": "select1"
-				},
-				{
-					"name": "TotalSales"
 				}
 			],
 			"scriptLines": [
@@ -123,7 +120,6 @@
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> select1",
-				"select1 filter(toDouble(Units)*Product_Price) ~> TotalSales",
 				"replacenulls sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     filePattern:'products.csv',",
