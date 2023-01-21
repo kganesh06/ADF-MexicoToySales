@@ -45,7 +45,7 @@
 				"replacenulls sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     filePattern:'products.csv',",
-				"     umask: 0022,",
+				"     umask: 0000,",
 				"     preCommands: [],",
 				"     postCommands: [],",
 				"     skipDuplicateMapInputs: true,",
