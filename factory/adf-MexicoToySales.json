@@ -1,0 +1,9 @@
+{
+	"name": "adf-MexicoToySales",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "b57fd497-46b5-4d31-acf3-043cef0d102f",
+		"tenantId": "e73b6aad-bf2a-4638-b87d-5b9cdaea14ac"
+	}
+}
