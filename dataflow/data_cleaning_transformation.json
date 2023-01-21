@@ -44,6 +44,7 @@
 				"removeNullValues derive(Product_Cost = iif(isNull(Product_Cost), \"0\", Product_Cost)) ~> replacenulls",
 				"replacenulls sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
+				"     filePattern:'products.csv',",
 				"     umask: 0022,",
 				"     preCommands: [],",
 				"     postCommands: [],",
