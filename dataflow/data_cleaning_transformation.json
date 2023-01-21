@@ -1,0 +1,55 @@
+{
+	"name": "data_cleaning_transformation",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_adls_prodcuts",
+						"type": "DatasetReference"
+					},
+					"name": "getProducts"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_adls_processdata_products",
+						"type": "DatasetReference"
+					},
+					"name": "processdata"
+				}
+			],
+			"transformations": [
+				{
+					"name": "removeNullValues"
+				},
+				{
+					"name": "replacenulls"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          Product_ID as string,",
+				"          Product_Name as string,",
+				"          Product_Category as string,",
+				"          Product_Cost as string,",
+				"          Product_Price as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> getProducts",
+				"getProducts filter(not(((isNull(Product_ID)) || isNull(Product_Name) || Product_ID==\"\" || Product_Name==\"\"))) ~> removeNullValues",
+				"removeNullValues derive(Product_Cost = iif(isNull(Product_Cost), \"0\", Product_Cost)) ~> replacenulls",
+				"replacenulls sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> processdata"
+			]
+		}
+	}
+}

@@ -1,0 +1,44 @@
+{
+	"name": "ds_adls_prodcuts",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_adls_rawdata",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "products.csv",
+				"fileSystem": "rawdata"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "Product_ID",
+				"type": "String"
+			},
+			{
+				"name": "Product_Name",
+				"type": "String"
+			},
+			{
+				"name": "Product_Category",
+				"type": "String"
+			},
+			{
+				"name": "Product_Cost",
+				"type": "String"
+			},
+			{
+				"name": "Product_Price",
+				"type": "String"
+			}
+		]
+	}
+}
