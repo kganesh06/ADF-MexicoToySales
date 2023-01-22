@@ -57,6 +57,15 @@
 				},
 				{
 					"name": "select1"
+				},
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "derivedColumn2"
+				},
+				{
+					"name": "derivedColumn3"
 				}
 			],
 			"scriptLines": [
@@ -101,7 +110,7 @@
 				"getProducts filter(not(((isNull(Product_ID)) || isNull(Product_Name) || Product_ID==\"\" || Product_Name==\"\"))) ~> removeNullValues",
 				"removeNullValues derive(Product_Cost = iif(isNull(Product_Cost), toDouble(0), Product_Cost)) ~> replacenulls",
 				"getSales filter(not(isNull(Sale_ID) || Sale_ID==\"\")) ~> removeNullSales",
-				"removeNullSales, replacenulls join(getSales@Product_ID == getProducts@Product_ID,",
+				"derivedColumn1, replacenulls join(getSales@Product_ID == getProducts@Product_ID,",
 				"     joinType:'left',",
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
@@ -112,14 +121,15 @@
 				"          Store_ID,",
 				"          Product_ID = getSales@Product_ID,",
 				"          Units,",
-				"          Product_ID = getProducts@Product_ID,",
-				"          Product_Name,",
-				"          Product_Category,",
 				"          Product_Cost,",
 				"          Product_Price",
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> select1",
+				"removeNullSales derive(Date = toDate(regexReplace(toString(Date), '[a-zA-Z]+',''))) ~> derivedColumn1",
+				"select1 derive(TotalSales = toDouble(Units) * Product_Price,",
+				"          CostPerSale =  toDouble(Units) * Product_Cost) ~> derivedColumn2",
+				"derivedColumn2 derive(ProfitPerSale = TotalSales - CostPerSale) ~> derivedColumn3",
 				"replacenulls sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     partitionFileNames:['products.csv'],",
