@@ -114,7 +114,7 @@
 				"     ignoreNoFilesFound: false,",
 				"     skipLines: 1) ~> getProducts",
 				"source(output(",
-				"          Sale_ID as short,",
+				"          Sale_ID as string,",
 				"          Date as date 'dd/MM/yyyy',",
 				"          Store_ID as short,",
 				"          Product_ID as short,",
