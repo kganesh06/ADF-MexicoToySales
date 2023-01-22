@@ -117,7 +117,7 @@
 				"          Sale_ID as string,",
 				"          Date as date 'dd/MM/yyyy',",
 				"          Store_ID as short,",
-				"          Product_ID as short,",
+				"          Product_ID as string,",
 				"          Units as short",
 				"     ),",
 				"     allowSchemaDrift: true,",
