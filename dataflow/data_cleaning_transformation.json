@@ -40,6 +40,27 @@
 						"type": "DatasetReference"
 					},
 					"name": "processdata"
+				},
+				{
+					"dataset": {
+						"referenceName": "ds_adls_processdata_sales",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				},
+				{
+					"dataset": {
+						"referenceName": "ds_adls_processdata_inv",
+						"type": "DatasetReference"
+					},
+					"name": "sink2"
+				},
+				{
+					"dataset": {
+						"referenceName": "ds_adls_processdata_stores",
+						"type": "DatasetReference"
+					},
+					"name": "sink3"
 				}
 			],
 			"transformations": [
@@ -82,7 +103,7 @@
 			],
 			"scriptLines": [
 				"source(output(",
-				"          Product_ID as string,",
+				"          Product_ID as short,",
 				"          Product_Name as string,",
 				"          Product_Category as string,",
 				"          Product_Cost as double,",
@@ -90,17 +111,19 @@
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     ignoreNoFilesFound: false) ~> getProducts",
+				"     ignoreNoFilesFound: false,",
+				"     skipLines: 1) ~> getProducts",
 				"source(output(",
-				"          Sale_ID as string,",
+				"          Sale_ID as short,",
 				"          Date as date 'dd/MM/yyyy',",
-				"          Store_ID as string,",
-				"          Product_ID as string,",
-				"          Units as integer",
+				"          Store_ID as short,",
+				"          Product_ID as short,",
+				"          Units as short",
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     ignoreNoFilesFound: false) ~> getSales",
+				"     ignoreNoFilesFound: false,",
+				"     skipLines: 1) ~> getSales",
 				"source(output(",
 				"          Store_ID as short,",
 				"          Product_ID as short,",
@@ -169,7 +192,32 @@
 				"     postCommands: [],",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
-				"     partitionBy('hash', 1)) ~> processdata"
+				"     partitionBy('hash', 1)) ~> processdata",
+				"derivedColumn3 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['sales.csv'],",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> sink1",
+				"getInventory sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['inventory.csv'],",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> sink2",
+				"select2 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> sink3"
 			]
 		}
 	}
