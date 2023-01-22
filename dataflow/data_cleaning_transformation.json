@@ -66,6 +66,9 @@
 				},
 				{
 					"name": "derivedColumn3"
+				},
+				{
+					"name": "aggregate1"
 				}
 			],
 			"scriptLines": [
@@ -130,6 +133,8 @@
 				"select1 derive(TotalSales = toDouble(Units) * Product_Price,",
 				"          CostPerSale =  toDouble(Units) * Product_Cost) ~> derivedColumn2",
 				"derivedColumn2 derive(ProfitPerSale = TotalSales - CostPerSale) ~> derivedColumn3",
+				"getStores aggregate(groupBy(Store_Name),",
+				"     count = count(Store_ID)) ~> aggregate1",
 				"replacenulls sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     partitionFileNames:['products.csv'],",
