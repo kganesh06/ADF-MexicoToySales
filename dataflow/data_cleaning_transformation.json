@@ -103,7 +103,7 @@
 			],
 			"scriptLines": [
 				"source(output(",
-				"          Product_ID as short,",
+				"          Product_ID as string,",
 				"          Product_Name as string,",
 				"          Product_Category as string,",
 				"          Product_Cost as double,",
@@ -165,7 +165,7 @@
 				"     skipDuplicateMapOutputs: true) ~> select1",
 				"removeNullSales derive(Date = toDate(regexReplace(toString(Date), '[a-zA-Z]+',''))) ~> derivedColumn1",
 				"select1 derive(TotalSales = toDouble(Units) * Product_Price,",
-				"          CostPerSale =  toDouble(Units) * Product_Cost) ~> derivedColumn2",
+				"          CostPerSale = toDouble(Units) * Product_Cost) ~> derivedColumn2",
 				"derivedColumn2 derive(ProfitPerSale = TotalSales - CostPerSale) ~> derivedColumn3",
 				"getStores aggregate(groupBy(Store_ID),",
 				"     count = count(Store_ID)) ~> aggregate1",
