@@ -166,6 +166,32 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/ds_adls_processdata_inv')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_adls_rawdata",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileSystem": "processdata"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_adls_rawdata')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/ds_adls_processdata_products')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -180,6 +206,58 @@
 					"location": {
 						"type": "AzureBlobFSLocation",
 						"fileName": "product.csv",
+						"fileSystem": "processdata"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_adls_rawdata')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_adls_processdata_sales')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_adls_rawdata",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileSystem": "processdata"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_adls_rawdata')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_adls_processdata_stores')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_adls_rawdata",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
 						"fileSystem": "processdata"
 					},
 					"columnDelimiter": ",",
@@ -405,7 +483,7 @@
 								"formatSettings": {
 									"type": "DelimitedTextWriteSettings",
 									"quoteAllText": true,
-									"fileExtension": ".txt"
+									"fileExtension": ".csv"
 								}
 							},
 							"enableStaging": false,
@@ -489,6 +567,27 @@
 								"type": "DatasetReference"
 							},
 							"name": "processdata"
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_adls_processdata_sales",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_adls_processdata_inv",
+								"type": "DatasetReference"
+							},
+							"name": "sink2"
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_adls_processdata_stores",
+								"type": "DatasetReference"
+							},
+							"name": "sink3"
 						}
 					],
 					"transformations": [
@@ -506,6 +605,27 @@
 						},
 						{
 							"name": "select1"
+						},
+						{
+							"name": "derivedColumn1"
+						},
+						{
+							"name": "derivedColumn2"
+						},
+						{
+							"name": "derivedColumn3"
+						},
+						{
+							"name": "aggregate1"
+						},
+						{
+							"name": "filter1"
+						},
+						{
+							"name": "join2"
+						},
+						{
+							"name": "select2"
 						}
 					],
 					"scriptLines": [
@@ -518,39 +638,43 @@
 						"     ),",
 						"     allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false) ~> getProducts",
+						"     ignoreNoFilesFound: false,",
+						"     skipLines: 1) ~> getProducts",
 						"source(output(",
 						"          Sale_ID as string,",
 						"          Date as date 'dd/MM/yyyy',",
-						"          Store_ID as string,",
+						"          Store_ID as short,",
 						"          Product_ID as string,",
-						"          Units as integer",
+						"          Units as short",
 						"     ),",
 						"     allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false) ~> getSales",
+						"     ignoreNoFilesFound: false,",
+						"     skipLines: 1) ~> getSales",
 						"source(output(",
-						"          Store_ID as string,",
-						"          Product_ID as string,",
+						"          Store_ID as short,",
+						"          Product_ID as short,",
 						"          Stock_On_Hand as short",
 						"     ),",
 						"     allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false) ~> getInventory",
+						"     ignoreNoFilesFound: false,",
+						"     skipLines: 1) ~> getInventory",
 						"source(output(",
-						"          Store_ID as string,",
+						"          Store_ID as short,",
 						"          Store_Name as string,",
 						"          Store_City as string,",
 						"          Store_Location as string,",
-						"          Store_Open_Date as string",
+						"          Store_Open_Date as date",
 						"     ),",
 						"     allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false) ~> getStores",
+						"     ignoreNoFilesFound: false,",
+						"     skipLines: 1) ~> getStores",
 						"getProducts filter(not(((isNull(Product_ID)) || isNull(Product_Name) || Product_ID==\"\" || Product_Name==\"\"))) ~> removeNullValues",
 						"removeNullValues derive(Product_Cost = iif(isNull(Product_Cost), toDouble(0), Product_Cost)) ~> replacenulls",
 						"getSales filter(not(isNull(Sale_ID) || Sale_ID==\"\")) ~> removeNullSales",
-						"removeNullSales, replacenulls join(getSales@Product_ID == getProducts@Product_ID,",
+						"derivedColumn1, replacenulls join(getSales@Product_ID == getProducts@Product_ID,",
 						"     joinType:'left',",
 						"     matchType:'exact',",
 						"     ignoreSpaces: false,",
@@ -561,22 +685,66 @@
 						"          Store_ID,",
 						"          Product_ID = getSales@Product_ID,",
 						"          Units,",
-						"          Product_ID = getProducts@Product_ID,",
-						"          Product_Name,",
-						"          Product_Category,",
 						"          Product_Cost,",
 						"          Product_Price",
 						"     ),",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true) ~> select1",
+						"removeNullSales derive(Date = toDate(regexReplace(toString(Date), '[a-zA-Z]+',''))) ~> derivedColumn1",
+						"select1 derive(TotalSales = toDouble(Units) * Product_Price,",
+						"          CostPerSale = toDouble(Units) * Product_Cost) ~> derivedColumn2",
+						"derivedColumn2 derive(ProfitPerSale = TotalSales - CostPerSale) ~> derivedColumn3",
+						"getStores aggregate(groupBy(Store_ID),",
+						"     count = count(Store_ID)) ~> aggregate1",
+						"aggregate1 filter(count == 1) ~> filter1",
+						"filter1, getStores join(aggregate1@Store_ID == getStores@Store_ID,",
+						"     joinType:'inner',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> join2",
+						"join2 select(mapColumn(",
+						"          Store_ID = getStores@Store_ID,",
+						"          Store_Name,",
+						"          Store_City,",
+						"          Store_Location,",
+						"          Store_Open_Date",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select2",
 						"replacenulls sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     filePattern:'products.csv',",
+						"     partitionFileNames:['products.csv'],",
 						"     umask: 0022,",
 						"     preCommands: [],",
 						"     postCommands: [],",
 						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> processdata"
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> processdata",
+						"derivedColumn3 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['sales.csv'],",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> sink1",
+						"getInventory sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['inventory.csv'],",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> sink2",
+						"select2 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> sink3"
 					]
 				}
 			},
@@ -585,7 +753,10 @@
 				"[concat(variables('factoryId'), '/datasets/ds_adls_sales')]",
 				"[concat(variables('factoryId'), '/datasets/ds_adls_Inventory')]",
 				"[concat(variables('factoryId'), '/datasets/ds_adls_store')]",
-				"[concat(variables('factoryId'), '/datasets/ds_adls_processdata_products')]"
+				"[concat(variables('factoryId'), '/datasets/ds_adls_processdata_products')]",
+				"[concat(variables('factoryId'), '/datasets/ds_adls_processdata_sales')]",
+				"[concat(variables('factoryId'), '/datasets/ds_adls_processdata_inv')]",
+				"[concat(variables('factoryId'), '/datasets/ds_adls_processdata_stores')]"
 			]
 		},
 		{
@@ -616,7 +787,10 @@
 									"getSales": {},
 									"getInventory": {},
 									"getStores": {},
-									"processdata": {}
+									"processdata": {},
+									"sink1": {},
+									"sink2": {},
+									"sink3": {}
 								}
 							},
 							"staging": {},
