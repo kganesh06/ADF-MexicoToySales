@@ -669,7 +669,7 @@
 							"name": "derivedColumn3"
 						},
 						{
-							"name": "aggregate1"
+							"name": "removeduplicates"
 						}
 					],
 					"scriptLines": [
@@ -739,7 +739,7 @@
 						"          CostPerSale = toDouble(Units) * Product_Cost) ~> derivedColumn2",
 						"derivedColumn2 derive(ProfitPerSale = TotalSales - CostPerSale) ~> derivedColumn3",
 						"getStores aggregate(groupBy(Store_ID),",
-						"     each(match(name!='Store_ID'), $$ = first($$))) ~> aggregate1",
+						"     each(match(name!='Store_ID'), $$ = first($$))) ~> removeduplicates",
 						"replacenulls sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     partitionFileNames:['products.csv'],",
@@ -767,7 +767,7 @@
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
 						"     partitionBy('hash', 1)) ~> sink2",
-						"aggregate1 sink(allowSchemaDrift: true,",
+						"removeduplicates sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     umask: 0022,",
 						"     preCommands: [],",
