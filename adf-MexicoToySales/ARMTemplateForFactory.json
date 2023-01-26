@@ -670,15 +670,6 @@
 						},
 						{
 							"name": "aggregate1"
-						},
-						{
-							"name": "filter1"
-						},
-						{
-							"name": "join2"
-						},
-						{
-							"name": "select2"
 						}
 					],
 					"scriptLines": [
@@ -718,7 +709,7 @@
 						"          Store_Name as string,",
 						"          Store_City as string,",
 						"          Store_Location as string,",
-						"          Store_Open_Date as date",
+						"          Store_Open_Date as string",
 						"     ),",
 						"     allowSchemaDrift: true,",
 						"     validateSchema: false,",
@@ -748,22 +739,7 @@
 						"          CostPerSale = toDouble(Units) * Product_Cost) ~> derivedColumn2",
 						"derivedColumn2 derive(ProfitPerSale = TotalSales - CostPerSale) ~> derivedColumn3",
 						"getStores aggregate(groupBy(Store_ID),",
-						"     count = count(Store_ID)) ~> aggregate1",
-						"aggregate1 filter(count == 1) ~> filter1",
-						"filter1, getStores join(aggregate1@Store_ID == getStores@Store_ID,",
-						"     joinType:'inner',",
-						"     matchType:'exact',",
-						"     ignoreSpaces: false,",
-						"     broadcast: 'auto')~> join2",
-						"join2 select(mapColumn(",
-						"          Store_ID = getStores@Store_ID,",
-						"          Store_Name,",
-						"          Store_City,",
-						"          Store_Location,",
-						"          Store_Open_Date",
-						"     ),",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> select2",
+						"     each(match(name!='Store_ID'), $$ = first($$))) ~> aggregate1",
 						"replacenulls sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     partitionFileNames:['products.csv'],",
@@ -791,7 +767,7 @@
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
 						"     partitionBy('hash', 1)) ~> sink2",
-						"select2 sink(allowSchemaDrift: true,",
+						"aggregate1 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     umask: 0022,",
 						"     preCommands: [],",
