@@ -1,5 +1,5 @@
 {
-	"name": "pl_Ingest_raw_to_process_transformation",
+	"name": "pl_tranform_raw_to_processdata",
 	"properties": {
 		"activities": [
 			{
