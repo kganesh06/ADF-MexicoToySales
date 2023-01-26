@@ -24,6 +24,7 @@
 					],
 					"storeSettings": {
 						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
 						"modifiedDatetimeStart": "2023-01-27T00:00:00.000Z",
 						"enablePartitionDiscovery": false
 					},
@@ -74,25 +75,7 @@
 										"type": "DelimitedTextReadSettings"
 									}
 								},
-								"sink": {
-									"type": "AzureSqlSink",
-									"writeBehavior": "insert",
-									"sqlWriterUseTableLock": false,
-									"tableOption": {
-										"value": "@{item().name}",
-										"type": "Expression"
-									},
-									"disableMetricsCollection": false
-								},
-								"enableStaging": false,
-								"translator": {
-									"type": "TabularTranslator",
-									"typeConversion": true,
-									"typeConversionSettings": {
-										"allowDataTruncation": true,
-										"treatBooleanAsNumber": false
-									}
-								}
+								"enableStaging": false
 							},
 							"inputs": [
 								{
@@ -104,12 +87,6 @@
 											"type": "Expression"
 										}
 									}
-								}
-							],
-							"outputs": [
-								{
-									"referenceName": "ds_asql_copy_data",
-									"type": "DatasetReference"
 								}
 							]
 						}
