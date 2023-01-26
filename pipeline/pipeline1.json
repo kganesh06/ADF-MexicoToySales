@@ -79,7 +79,7 @@
 									"writeBehavior": "insert",
 									"sqlWriterUseTableLock": false,
 									"tableOption": {
-										"value": "@{toLower(item().name)}",
+										"value": "@{item().name}",
 										"type": "Expression"
 									},
 									"disableMetricsCollection": false
@@ -108,7 +108,7 @@
 							],
 							"outputs": [
 								{
-									"referenceName": "ds_asql_mexico_db",
+									"referenceName": "ds_asql_copy_data",
 									"type": "DatasetReference"
 								}
 							]
