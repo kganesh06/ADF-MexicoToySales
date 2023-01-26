@@ -17,6 +17,9 @@
 		"ls_adls_rawdata_accountKey": {
 			"value": ""
 		},
+		"ls_asql_mexico_db_connectionString": {
+			"value": ""
+		},
 		"ls_adls_rawdata_properties_typeProperties_url": {
 			"value": "https://adfpipelineadls.dfs.core.windows.net/"
 		},

@@ -23,6 +23,10 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'accountKey' of 'ls_adls_rawdata'"
 		},
+		"ls_asql_mexico_db_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'ls_asql_mexico_db'"
+		},
 		"ls_adls_rawdata_properties_typeProperties_url": {
 			"type": "string",
 			"defaultValue": "https://adfpipelineadls.dfs.core.windows.net/"
@@ -66,12 +70,35 @@
 					"ls_adls_rawdata_accountKey": {
 						"value": "[parameters('ls_adls_rawdata_accountKey')]"
 					},
+					"ls_asql_mexico_db_connectionString": {
+						"value": "[parameters('ls_asql_mexico_db_connectionString')]"
+					},
 					"ls_adls_rawdata_properties_typeProperties_url": {
 						"value": "[parameters('ls_adls_rawdata_properties_typeProperties_url')]"
 					}
 				}
 			},
 			"dependsOn": []
+		},
+		{
+			"name": "adf-MexicoToySales_ArmTemplate_1",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-02-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_1.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'adf-MexicoToySales_ArmTemplate_0')]"
+			]
 		}
 	]
 }
