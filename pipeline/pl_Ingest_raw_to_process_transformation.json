@@ -1,5 +1,5 @@
 {
-	"name": "pipeline1",
+	"name": "pl_Ingest_raw_to_process_transformation",
 	"properties": {
 		"activities": [
 			{

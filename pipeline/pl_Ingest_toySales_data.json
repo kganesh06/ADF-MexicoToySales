@@ -1,5 +1,5 @@
 {
-	"name": "Ingest_toySales_data",
+	"name": "pl_Ingest_toySales_data",
 	"properties": {
 		"activities": [
 			{
