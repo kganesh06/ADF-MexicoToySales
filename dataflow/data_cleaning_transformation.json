@@ -39,28 +39,28 @@
 						"referenceName": "ds_adls_processdata_sales",
 						"type": "DatasetReference"
 					},
-					"name": "loadtosales"
+					"name": "sinkSales"
 				},
 				{
 					"dataset": {
 						"referenceName": "ds_asql_inv",
 						"type": "DatasetReference"
 					},
-					"name": "loadtoInventory"
+					"name": "sinkInventory"
 				},
 				{
 					"dataset": {
 						"referenceName": "ds_asql_stores",
 						"type": "DatasetReference"
 					},
-					"name": "loadtoStores"
+					"name": "sinkStores"
 				},
 				{
 					"dataset": {
 						"referenceName": "ds_asql_products",
 						"type": "DatasetReference"
 					},
-					"name": "loadtoproducts"
+					"name": "sinkproducts"
 				}
 			],
 			"transformations": [
@@ -179,7 +179,7 @@
 				"     postCommands: [],",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
-				"     partitionBy('hash', 1)) ~> loadtosales",
+				"     partitionBy('hash', 1)) ~> sinkSales",
 				"getInventory sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
@@ -198,7 +198,7 @@
 				"     errorHandlingOption: 'stopOnFirstError',",
 				"     partitionBy('hash', 1),",
 				"     preCommands: [],",
-				"     postCommands: []) ~> loadtoInventory",
+				"     postCommands: []) ~> sinkInventory",
 				"removeduplicates sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
@@ -218,7 +218,7 @@
 				"     errorHandlingOption: 'stopOnFirstError',",
 				"     partitionBy('hash', 1),",
 				"     preCommands: [],",
-				"     postCommands: []) ~> loadtoStores",
+				"     postCommands: []) ~> sinkStores",
 				"changdatatypes sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
@@ -235,7 +235,7 @@
 				"     format: 'table',",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
-				"     errorHandlingOption: 'stopOnFirstError') ~> loadtoproducts"
+				"     errorHandlingOption: 'stopOnFirstError') ~> sinkproducts"
 			]
 		}
 	}
