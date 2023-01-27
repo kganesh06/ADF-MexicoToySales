@@ -547,6 +547,35 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/ds_asql_data')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_asql_mexico_db",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"TableName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": {
+						"value": "@dataset().TableName",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_asql_mexico_db')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/ds_asql_inv')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -621,48 +650,6 @@
 				"typeProperties": {
 					"schema": "dbo",
 					"table": "Products"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/ls_asql_mexico_db')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ds_asql_stores')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "ls_asql_mexico_db",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "AzureSqlTable",
-				"schema": [
-					{
-						"name": "Store_ID",
-						"type": "varchar"
-					},
-					{
-						"name": "Store_Name",
-						"type": "varchar"
-					},
-					{
-						"name": "Store_City",
-						"type": "varchar"
-					},
-					{
-						"name": "Store_Location",
-						"type": "varchar"
-					},
-					{
-						"name": "Store_Open_Date",
-						"type": "date"
-					}
-				],
-				"typeProperties": {
-					"schema": "dbo",
-					"table": "store"
 				}
 			},
 			"dependsOn": [
