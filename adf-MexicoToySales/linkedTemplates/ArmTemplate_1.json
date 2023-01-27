@@ -13,6 +13,388 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/copyTosql')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get Metadata1",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "ds_adls_processdata",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobFSReadSettings",
+								"recursive": true,
+								"modifiedDatetimeStart": "2023-01-27T00:00:00.000Z",
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "DelimitedTextReadSettings"
+							}
+						}
+					},
+					{
+						"name": "ForEach1",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get Metadata1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_Ingest_toySales_data')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy rawData to ADLS",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"wildcardFileName": "*.csv",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".csv"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_ablob_rawdata",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ds_adls_rawdata",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/data_cleaning_transformation')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_adls_prodcuts",
+								"type": "DatasetReference"
+							},
+							"name": "getProducts"
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_adls_sales",
+								"type": "DatasetReference"
+							},
+							"name": "getSales"
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_adls_Inventory",
+								"type": "DatasetReference"
+							},
+							"name": "getInventory"
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_adls_store",
+								"type": "DatasetReference"
+							},
+							"name": "getStores"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_adls_processdata_sales",
+								"type": "DatasetReference"
+							},
+							"name": "sinkSales"
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_asql_inv",
+								"type": "DatasetReference"
+							},
+							"name": "sinkInventory"
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_asql_stores",
+								"type": "DatasetReference"
+							},
+							"name": "sinkStores"
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_asql_products",
+								"type": "DatasetReference"
+							},
+							"name": "sinkproducts"
+						}
+					],
+					"transformations": [
+						{
+							"name": "removeNullValues"
+						},
+						{
+							"name": "replacenulls"
+						},
+						{
+							"name": "removeNullSales"
+						},
+						{
+							"name": "joinwithproducts"
+						},
+						{
+							"name": "selectcols"
+						},
+						{
+							"name": "dateclean"
+						},
+						{
+							"name": "totalcost"
+						},
+						{
+							"name": "costPerSale"
+						},
+						{
+							"name": "removeduplicates"
+						},
+						{
+							"name": "changdatatypes"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          Product_ID as string,",
+						"          Product_Name as string,",
+						"          Product_Category as string,",
+						"          Product_Cost as double,",
+						"          Product_Price as double",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     skipLines: 1) ~> getProducts",
+						"source(output(",
+						"          Sale_ID as string,",
+						"          Date as date 'dd/MM/yyyy',",
+						"          Store_ID as short,",
+						"          Product_ID as string,",
+						"          Units as short",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     skipLines: 1) ~> getSales",
+						"source(output(",
+						"          Store_ID as short,",
+						"          Product_ID as short,",
+						"          Stock_On_Hand as short",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     skipLines: 1) ~> getInventory",
+						"source(output(",
+						"          Store_ID as short,",
+						"          Store_Name as string,",
+						"          Store_City as string,",
+						"          Store_Location as string,",
+						"          Store_Open_Date as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     skipLines: 1) ~> getStores",
+						"getProducts filter(not(((isNull(Product_ID)) || isNull(Product_Name) || Product_ID==\"\" || Product_Name==\"\"))) ~> removeNullValues",
+						"removeNullValues derive(Product_Cost = iif(isNull(Product_Cost), toDouble(0), Product_Cost)) ~> replacenulls",
+						"getSales filter(not(isNull(Sale_ID) || Sale_ID==\"\")) ~> removeNullSales",
+						"dateclean, replacenulls join(getSales@Product_ID == getProducts@Product_ID,",
+						"     joinType:'left',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> joinwithproducts",
+						"joinwithproducts select(mapColumn(",
+						"          Sale_ID,",
+						"          Date,",
+						"          Store_ID,",
+						"          Product_ID = getSales@Product_ID,",
+						"          Units,",
+						"          Product_Cost,",
+						"          Product_Price",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> selectcols",
+						"removeNullSales derive(Date = toDate(regexReplace(toString(Date), '[a-zA-Z]+',''))) ~> dateclean",
+						"selectcols derive(TotalSales = toDouble(Units) * Product_Price,",
+						"          CostPerSale = toDouble(Units) * Product_Cost) ~> totalcost",
+						"totalcost derive(ProfitPerSale = TotalSales - CostPerSale) ~> costPerSale",
+						"getStores aggregate(groupBy(Store_ID),",
+						"     each(match(name!='Store_ID'), $$ = first($$))) ~> removeduplicates",
+						"replacenulls cast(output(",
+						"          Product_ID as string,",
+						"          Product_Name as string,",
+						"          Product_Category as string,",
+						"          Product_Cost as string,",
+						"          Product_Price as string",
+						"     ),",
+						"     errors: true) ~> changdatatypes",
+						"costPerSale sink(allowSchemaDrift: true,",
+						"     validateSchema: true,",
+						"     partitionFileNames:['sales.csv'],",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> sinkSales",
+						"getInventory sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          Store_ID as string,",
+						"          Product_ID as string,",
+						"          Stock_On_Hand as integer",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     truncate:true,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     partitionBy('hash', 1),",
+						"     preCommands: [],",
+						"     postCommands: []) ~> sinkInventory",
+						"removeduplicates sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          Store_ID as string,",
+						"          Store_Name as string,",
+						"          Store_City as string,",
+						"          Store_Location as string,",
+						"          Store_Open_Date as date",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     partitionBy('hash', 1),",
+						"     preCommands: [],",
+						"     postCommands: []) ~> sinkStores",
+						"changdatatypes sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          Product_ID as string,",
+						"          Product_Name as string,",
+						"          Product_Category as string,",
+						"          Product_Cost as decimal(3,2),",
+						"          Product_Price as decimal(3,2)",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> sinkproducts"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/pl_tranform_raw_to_processdata')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -40,10 +422,10 @@
 									"getSales": {},
 									"getInventory": {},
 									"getStores": {},
-									"processdata": {},
-									"sink1": {},
-									"sink2": {},
-									"sink3": {}
+									"sinkSales": {},
+									"sinkInventory": {},
+									"sinkStores": {},
+									"sinkproducts": {}
 								}
 							},
 							"staging": {},
@@ -61,7 +443,9 @@
 				},
 				"annotations": []
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/data_cleaning_transformation')]"
+			]
 		}
 	]
 }

@@ -37,7 +37,7 @@
 	},
 	"resources": [
 		{
-			"name": "[concat(parameters('factoryName'), '/pipeline1')]",
+			"name": "[concat(parameters('factoryName'), '/copyTosql')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -73,6 +73,20 @@
 								"type": "DelimitedTextReadSettings"
 							}
 						}
+					},
+					{
+						"name": "ForEach1",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get Metadata1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {}
 					}
 				],
 				"policy": {
@@ -192,10 +206,10 @@
 									"getSales": {},
 									"getInventory": {},
 									"getStores": {},
-									"processdata": {},
-									"sink1": {},
-									"sink2": {},
-									"sink3": {}
+									"sinkSales": {},
+									"sinkInventory": {},
+									"sinkStores": {},
+									"sinkproducts": {}
 								}
 							},
 							"staging": {},
@@ -389,6 +403,7 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
+						"fileName": "inventory.csv",
 						"fileSystem": "processdata"
 					},
 					"columnDelimiter": ",",
@@ -415,11 +430,12 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
-						"fileName": "product.csv",
+						"fileName": "products.txt",
 						"fileSystem": "processdata"
 					},
 					"columnDelimiter": ",",
 					"escapeChar": "\\",
+					"firstRowAsHeader": false,
 					"quoteChar": "\""
 				},
 				"schema": []
@@ -442,6 +458,7 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
+						"fileName": "sales.txt",
 						"fileSystem": "processdata"
 					},
 					"columnDelimiter": ",",
@@ -468,6 +485,7 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
+						"fileName": "store.txt",
 						"fileSystem": "processdata"
 					},
 					"columnDelimiter": ",",
@@ -655,6 +673,129 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/ds_asql_inv')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_asql_mexico_db",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "Store_ID",
+						"type": "varchar"
+					},
+					{
+						"name": "Product_ID",
+						"type": "varchar"
+					},
+					{
+						"name": "Stock_On_Hand",
+						"type": "int",
+						"precision": 10
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "inventory"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_asql_mexico_db')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_asql_products')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_asql_mexico_db",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "Product_ID",
+						"type": "varchar"
+					},
+					{
+						"name": "Product_Name",
+						"type": "varchar"
+					},
+					{
+						"name": "Product_Category",
+						"type": "varchar"
+					},
+					{
+						"name": "Product_Cost",
+						"type": "decimal",
+						"precision": 3,
+						"scale": 2
+					},
+					{
+						"name": "Product_Price",
+						"type": "decimal",
+						"precision": 3,
+						"scale": 2
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "Products"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_asql_mexico_db')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_asql_stores')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_asql_mexico_db",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "Store_ID",
+						"type": "varchar"
+					},
+					{
+						"name": "Store_Name",
+						"type": "varchar"
+					},
+					{
+						"name": "Store_City",
+						"type": "varchar"
+					},
+					{
+						"name": "Store_Location",
+						"type": "varchar"
+					},
+					{
+						"name": "Store_Open_Date",
+						"type": "date"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "store"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_asql_mexico_db')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/ds_ablob_rawdata')]",
 			"type": "Microsoft.DataFactory/factories/linkedServices",
 			"apiVersion": "2018-06-01",
@@ -763,31 +904,31 @@
 					"sinks": [
 						{
 							"dataset": {
-								"referenceName": "ds_adls_processdata_products",
-								"type": "DatasetReference"
-							},
-							"name": "processdata"
-						},
-						{
-							"dataset": {
 								"referenceName": "ds_adls_processdata_sales",
 								"type": "DatasetReference"
 							},
-							"name": "sink1"
+							"name": "sinkSales"
 						},
 						{
 							"dataset": {
-								"referenceName": "ds_adls_processdata_inv",
+								"referenceName": "ds_asql_inv",
 								"type": "DatasetReference"
 							},
-							"name": "sink2"
+							"name": "sinkInventory"
 						},
 						{
 							"dataset": {
-								"referenceName": "ds_adls_processdata_stores",
+								"referenceName": "ds_asql_stores",
 								"type": "DatasetReference"
 							},
-							"name": "sink3"
+							"name": "sinkStores"
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_asql_products",
+								"type": "DatasetReference"
+							},
+							"name": "sinkproducts"
 						}
 					],
 					"transformations": [
@@ -801,22 +942,25 @@
 							"name": "removeNullSales"
 						},
 						{
-							"name": "join1"
+							"name": "joinwithproducts"
 						},
 						{
-							"name": "select1"
+							"name": "selectcols"
 						},
 						{
-							"name": "derivedColumn1"
+							"name": "dateclean"
 						},
 						{
-							"name": "derivedColumn2"
+							"name": "totalcost"
 						},
 						{
-							"name": "derivedColumn3"
+							"name": "costPerSale"
 						},
 						{
 							"name": "removeduplicates"
+						},
+						{
+							"name": "changdatatypes"
 						}
 					],
 					"scriptLines": [
@@ -865,12 +1009,12 @@
 						"getProducts filter(not(((isNull(Product_ID)) || isNull(Product_Name) || Product_ID==\"\" || Product_Name==\"\"))) ~> removeNullValues",
 						"removeNullValues derive(Product_Cost = iif(isNull(Product_Cost), toDouble(0), Product_Cost)) ~> replacenulls",
 						"getSales filter(not(isNull(Sale_ID) || Sale_ID==\"\")) ~> removeNullSales",
-						"derivedColumn1, replacenulls join(getSales@Product_ID == getProducts@Product_ID,",
+						"dateclean, replacenulls join(getSales@Product_ID == getProducts@Product_ID,",
 						"     joinType:'left',",
 						"     matchType:'exact',",
 						"     ignoreSpaces: false,",
-						"     broadcast: 'auto')~> join1",
-						"join1 select(mapColumn(",
+						"     broadcast: 'auto')~> joinwithproducts",
+						"joinwithproducts select(mapColumn(",
 						"          Sale_ID,",
 						"          Date,",
 						"          Store_ID,",
@@ -880,49 +1024,86 @@
 						"          Product_Price",
 						"     ),",
 						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> select1",
-						"removeNullSales derive(Date = toDate(regexReplace(toString(Date), '[a-zA-Z]+',''))) ~> derivedColumn1",
-						"select1 derive(TotalSales = toDouble(Units) * Product_Price,",
-						"          CostPerSale = toDouble(Units) * Product_Cost) ~> derivedColumn2",
-						"derivedColumn2 derive(ProfitPerSale = TotalSales - CostPerSale) ~> derivedColumn3",
+						"     skipDuplicateMapOutputs: true) ~> selectcols",
+						"removeNullSales derive(Date = toDate(regexReplace(toString(Date), '[a-zA-Z]+',''))) ~> dateclean",
+						"selectcols derive(TotalSales = toDouble(Units) * Product_Price,",
+						"          CostPerSale = toDouble(Units) * Product_Cost) ~> totalcost",
+						"totalcost derive(ProfitPerSale = TotalSales - CostPerSale) ~> costPerSale",
 						"getStores aggregate(groupBy(Store_ID),",
 						"     each(match(name!='Store_ID'), $$ = first($$))) ~> removeduplicates",
-						"replacenulls sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     partitionFileNames:['products.csv'],",
-						"     umask: 0022,",
-						"     preCommands: [],",
-						"     postCommands: [],",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     partitionBy('hash', 1)) ~> processdata",
-						"derivedColumn3 sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
+						"replacenulls cast(output(",
+						"          Product_ID as string,",
+						"          Product_Name as string,",
+						"          Product_Category as string,",
+						"          Product_Cost as string,",
+						"          Product_Price as string",
+						"     ),",
+						"     errors: true) ~> changdatatypes",
+						"costPerSale sink(allowSchemaDrift: true,",
+						"     validateSchema: true,",
 						"     partitionFileNames:['sales.csv'],",
 						"     umask: 0022,",
 						"     preCommands: [],",
 						"     postCommands: [],",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
-						"     partitionBy('hash', 1)) ~> sink1",
+						"     partitionBy('hash', 1)) ~> sinkSales",
 						"getInventory sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     partitionFileNames:['inventory.csv'],",
-						"     umask: 0022,",
-						"     preCommands: [],",
-						"     postCommands: [],",
+						"     input(",
+						"          Store_ID as string,",
+						"          Product_ID as string,",
+						"          Stock_On_Hand as integer",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     truncate:true,",
+						"     format: 'table',",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
-						"     partitionBy('hash', 1)) ~> sink2",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     partitionBy('hash', 1),",
+						"     preCommands: [],",
+						"     postCommands: []) ~> sinkInventory",
 						"removeduplicates sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     partitionFileNames:['stores.csv'],",
-						"     umask: 0022,",
-						"     preCommands: [],",
-						"     postCommands: [],",
+						"     input(",
+						"          Store_ID as string,",
+						"          Store_Name as string,",
+						"          Store_City as string,",
+						"          Store_Location as string,",
+						"          Store_Open_Date as date",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
-						"     partitionBy('hash', 1)) ~> sink3"
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     partitionBy('hash', 1),",
+						"     preCommands: [],",
+						"     postCommands: []) ~> sinkStores",
+						"changdatatypes sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          Product_ID as string,",
+						"          Product_Name as string,",
+						"          Product_Category as string,",
+						"          Product_Cost as decimal(3,2),",
+						"          Product_Price as decimal(3,2)",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> sinkproducts"
 					]
 				}
 			},
@@ -931,10 +1112,10 @@
 				"[concat(variables('factoryId'), '/datasets/ds_adls_sales')]",
 				"[concat(variables('factoryId'), '/datasets/ds_adls_Inventory')]",
 				"[concat(variables('factoryId'), '/datasets/ds_adls_store')]",
-				"[concat(variables('factoryId'), '/datasets/ds_adls_processdata_products')]",
 				"[concat(variables('factoryId'), '/datasets/ds_adls_processdata_sales')]",
-				"[concat(variables('factoryId'), '/datasets/ds_adls_processdata_inv')]",
-				"[concat(variables('factoryId'), '/datasets/ds_adls_processdata_stores')]"
+				"[concat(variables('factoryId'), '/datasets/ds_asql_inv')]",
+				"[concat(variables('factoryId'), '/datasets/ds_asql_stores')]",
+				"[concat(variables('factoryId'), '/datasets/ds_asql_products')]"
 			]
 		}
 	]

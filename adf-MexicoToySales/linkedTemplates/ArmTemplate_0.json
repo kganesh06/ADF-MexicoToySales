@@ -277,6 +277,7 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
+						"fileName": "inventory.csv",
 						"fileSystem": "processdata"
 					},
 					"columnDelimiter": ",",
@@ -303,11 +304,12 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
-						"fileName": "product.csv",
+						"fileName": "products.txt",
 						"fileSystem": "processdata"
 					},
 					"columnDelimiter": ",",
 					"escapeChar": "\\",
+					"firstRowAsHeader": false,
 					"quoteChar": "\""
 				},
 				"schema": []
@@ -330,6 +332,7 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
+						"fileName": "sales.txt",
 						"fileSystem": "processdata"
 					},
 					"columnDelimiter": ",",
@@ -356,6 +359,7 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
+						"fileName": "store.txt",
 						"fileSystem": "processdata"
 					},
 					"columnDelimiter": ",",
@@ -543,345 +547,126 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/pipeline1')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
+			"name": "[concat(parameters('factoryName'), '/ds_asql_inv')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"activities": [
+				"linkedServiceName": {
+					"referenceName": "ls_asql_mexico_db",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
 					{
-						"name": "Get Metadata1",
-						"type": "GetMetadata",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataset": {
-								"referenceName": "ds_adls_processdata",
-								"type": "DatasetReference",
-								"parameters": {}
-							},
-							"fieldList": [
-								"childItems"
-							],
-							"storeSettings": {
-								"type": "AzureBlobFSReadSettings",
-								"recursive": true,
-								"modifiedDatetimeStart": "2023-01-27T00:00:00.000Z",
-								"enablePartitionDiscovery": false
-							},
-							"formatSettings": {
-								"type": "DelimitedTextReadSettings"
-							}
-						}
+						"name": "Store_ID",
+						"type": "varchar"
+					},
+					{
+						"name": "Product_ID",
+						"type": "varchar"
+					},
+					{
+						"name": "Stock_On_Hand",
+						"type": "int",
+						"precision": 10
 					}
 				],
-				"policy": {
-					"elapsedTimeMetric": {},
-					"cancelAfter": {}
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ds_adls_processdata')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/pl_Ingest_toySales_data')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "Copy rawData to ADLS",
-						"type": "Copy",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "DelimitedTextSource",
-								"storeSettings": {
-									"type": "AzureBlobStorageReadSettings",
-									"recursive": true,
-									"wildcardFileName": "*.csv",
-									"enablePartitionDiscovery": false
-								},
-								"formatSettings": {
-									"type": "DelimitedTextReadSettings"
-								}
-							},
-							"sink": {
-								"type": "DelimitedTextSink",
-								"storeSettings": {
-									"type": "AzureBlobFSWriteSettings"
-								},
-								"formatSettings": {
-									"type": "DelimitedTextWriteSettings",
-									"quoteAllText": true,
-									"fileExtension": ".csv"
-								}
-							},
-							"enableStaging": false,
-							"translator": {
-								"type": "TabularTranslator",
-								"typeConversion": true,
-								"typeConversionSettings": {
-									"allowDataTruncation": true,
-									"treatBooleanAsNumber": false
-								}
-							}
-						},
-						"inputs": [
-							{
-								"referenceName": "ds_ablob_rawdata",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						],
-						"outputs": [
-							{
-								"referenceName": "ds_adls_rawdata",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						]
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {},
-					"cancelAfter": {}
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ds_ablob_rawdata')]",
-				"[concat(variables('factoryId'), '/datasets/ds_adls_rawdata')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/data_cleaning_transformation')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"type": "MappingDataFlow",
 				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "ds_adls_prodcuts",
-								"type": "DatasetReference"
-							},
-							"name": "getProducts"
-						},
-						{
-							"dataset": {
-								"referenceName": "ds_adls_sales",
-								"type": "DatasetReference"
-							},
-							"name": "getSales"
-						},
-						{
-							"dataset": {
-								"referenceName": "ds_adls_Inventory",
-								"type": "DatasetReference"
-							},
-							"name": "getInventory"
-						},
-						{
-							"dataset": {
-								"referenceName": "ds_adls_store",
-								"type": "DatasetReference"
-							},
-							"name": "getStores"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "ds_adls_processdata_products",
-								"type": "DatasetReference"
-							},
-							"name": "processdata"
-						},
-						{
-							"dataset": {
-								"referenceName": "ds_adls_processdata_sales",
-								"type": "DatasetReference"
-							},
-							"name": "sink1"
-						},
-						{
-							"dataset": {
-								"referenceName": "ds_adls_processdata_inv",
-								"type": "DatasetReference"
-							},
-							"name": "sink2"
-						},
-						{
-							"dataset": {
-								"referenceName": "ds_adls_processdata_stores",
-								"type": "DatasetReference"
-							},
-							"name": "sink3"
-						}
-					],
-					"transformations": [
-						{
-							"name": "removeNullValues"
-						},
-						{
-							"name": "replacenulls"
-						},
-						{
-							"name": "removeNullSales"
-						},
-						{
-							"name": "join1"
-						},
-						{
-							"name": "select1"
-						},
-						{
-							"name": "derivedColumn1"
-						},
-						{
-							"name": "derivedColumn2"
-						},
-						{
-							"name": "derivedColumn3"
-						},
-						{
-							"name": "removeduplicates"
-						}
-					],
-					"scriptLines": [
-						"source(output(",
-						"          Product_ID as string,",
-						"          Product_Name as string,",
-						"          Product_Category as string,",
-						"          Product_Cost as double,",
-						"          Product_Price as double",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false,",
-						"     skipLines: 1) ~> getProducts",
-						"source(output(",
-						"          Sale_ID as string,",
-						"          Date as date 'dd/MM/yyyy',",
-						"          Store_ID as short,",
-						"          Product_ID as string,",
-						"          Units as short",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false,",
-						"     skipLines: 1) ~> getSales",
-						"source(output(",
-						"          Store_ID as short,",
-						"          Product_ID as short,",
-						"          Stock_On_Hand as short",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false,",
-						"     skipLines: 1) ~> getInventory",
-						"source(output(",
-						"          Store_ID as short,",
-						"          Store_Name as string,",
-						"          Store_City as string,",
-						"          Store_Location as string,",
-						"          Store_Open_Date as string",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false,",
-						"     skipLines: 1) ~> getStores",
-						"getProducts filter(not(((isNull(Product_ID)) || isNull(Product_Name) || Product_ID==\"\" || Product_Name==\"\"))) ~> removeNullValues",
-						"removeNullValues derive(Product_Cost = iif(isNull(Product_Cost), toDouble(0), Product_Cost)) ~> replacenulls",
-						"getSales filter(not(isNull(Sale_ID) || Sale_ID==\"\")) ~> removeNullSales",
-						"derivedColumn1, replacenulls join(getSales@Product_ID == getProducts@Product_ID,",
-						"     joinType:'left',",
-						"     matchType:'exact',",
-						"     ignoreSpaces: false,",
-						"     broadcast: 'auto')~> join1",
-						"join1 select(mapColumn(",
-						"          Sale_ID,",
-						"          Date,",
-						"          Store_ID,",
-						"          Product_ID = getSales@Product_ID,",
-						"          Units,",
-						"          Product_Cost,",
-						"          Product_Price",
-						"     ),",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> select1",
-						"removeNullSales derive(Date = toDate(regexReplace(toString(Date), '[a-zA-Z]+',''))) ~> derivedColumn1",
-						"select1 derive(TotalSales = toDouble(Units) * Product_Price,",
-						"          CostPerSale = toDouble(Units) * Product_Cost) ~> derivedColumn2",
-						"derivedColumn2 derive(ProfitPerSale = TotalSales - CostPerSale) ~> derivedColumn3",
-						"getStores aggregate(groupBy(Store_ID),",
-						"     each(match(name!='Store_ID'), $$ = first($$))) ~> removeduplicates",
-						"replacenulls sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     partitionFileNames:['products.csv'],",
-						"     umask: 0022,",
-						"     preCommands: [],",
-						"     postCommands: [],",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     partitionBy('hash', 1)) ~> processdata",
-						"derivedColumn3 sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     partitionFileNames:['sales.csv'],",
-						"     umask: 0022,",
-						"     preCommands: [],",
-						"     postCommands: [],",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     partitionBy('hash', 1)) ~> sink1",
-						"getInventory sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     partitionFileNames:['inventory.csv'],",
-						"     umask: 0022,",
-						"     preCommands: [],",
-						"     postCommands: [],",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     partitionBy('hash', 1)) ~> sink2",
-						"removeduplicates sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     partitionFileNames:['stores.csv'],",
-						"     umask: 0022,",
-						"     preCommands: [],",
-						"     postCommands: [],",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     partitionBy('hash', 1)) ~> sink3"
-					]
+					"schema": "dbo",
+					"table": "inventory"
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ds_adls_prodcuts')]",
-				"[concat(variables('factoryId'), '/datasets/ds_adls_sales')]",
-				"[concat(variables('factoryId'), '/datasets/ds_adls_Inventory')]",
-				"[concat(variables('factoryId'), '/datasets/ds_adls_store')]",
-				"[concat(variables('factoryId'), '/datasets/ds_adls_processdata_products')]",
-				"[concat(variables('factoryId'), '/datasets/ds_adls_processdata_sales')]",
-				"[concat(variables('factoryId'), '/datasets/ds_adls_processdata_inv')]",
-				"[concat(variables('factoryId'), '/datasets/ds_adls_processdata_stores')]"
+				"[concat(variables('factoryId'), '/linkedServices/ls_asql_mexico_db')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_asql_products')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_asql_mexico_db",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "Product_ID",
+						"type": "varchar"
+					},
+					{
+						"name": "Product_Name",
+						"type": "varchar"
+					},
+					{
+						"name": "Product_Category",
+						"type": "varchar"
+					},
+					{
+						"name": "Product_Cost",
+						"type": "decimal",
+						"precision": 3,
+						"scale": 2
+					},
+					{
+						"name": "Product_Price",
+						"type": "decimal",
+						"precision": 3,
+						"scale": 2
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "Products"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_asql_mexico_db')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_asql_stores')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_asql_mexico_db",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "Store_ID",
+						"type": "varchar"
+					},
+					{
+						"name": "Store_Name",
+						"type": "varchar"
+					},
+					{
+						"name": "Store_City",
+						"type": "varchar"
+					},
+					{
+						"name": "Store_Location",
+						"type": "varchar"
+					},
+					{
+						"name": "Store_Open_Date",
+						"type": "date"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "store"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_asql_mexico_db')]"
 			]
 		}
 	]
