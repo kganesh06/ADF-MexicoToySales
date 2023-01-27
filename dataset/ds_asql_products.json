@@ -1,0 +1,41 @@
+{
+	"name": "ds_asql_products",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_asql_mexico_db",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "Product_ID",
+				"type": "varchar"
+			},
+			{
+				"name": "Product_Name",
+				"type": "varchar"
+			},
+			{
+				"name": "Product_Category",
+				"type": "varchar"
+			},
+			{
+				"name": "Product_Cost",
+				"type": "decimal",
+				"precision": 3,
+				"scale": 2
+			},
+			{
+				"name": "Product_Price",
+				"type": "decimal",
+				"precision": 3,
+				"scale": 2
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "products"
+		}
+	}
+}
