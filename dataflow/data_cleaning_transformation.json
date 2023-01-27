@@ -170,7 +170,7 @@
 				"     skipDuplicateMapOutputs: true,",
 				"     partitionBy('hash', 1)) ~> processdata",
 				"derivedColumn3 sink(allowSchemaDrift: true,",
-				"     validateSchema: false,",
+				"     validateSchema: true,",
 				"     partitionFileNames:['sales.csv'],",
 				"     umask: 0022,",
 				"     preCommands: [],",

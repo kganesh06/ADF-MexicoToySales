@@ -10,6 +10,7 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
+				"fileName": "sales.txt",
 				"fileSystem": "processdata"
 			},
 			"columnDelimiter": ",",
