@@ -48,7 +48,7 @@
 				"typeProperties": {
 					"activities": [
 						{
-							"name": "Copy data1",
+							"name": "copyTosql",
 							"type": "Copy",
 							"dependsOn": [],
 							"policy": {
@@ -71,7 +71,20 @@
 										"type": "DelimitedTextReadSettings"
 									}
 								},
-								"enableStaging": false
+								"sink": {
+									"type": "AzureSqlSink",
+									"writeBehavior": "insert",
+									"sqlWriterUseTableLock": false
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
 							},
 							"inputs": [
 								{
@@ -79,6 +92,18 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"FileName": {
+											"value": "@item().name",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "ds_asql_data",
+									"type": "DatasetReference",
+									"parameters": {
+										"TableName": {
 											"value": "@item().name",
 											"type": "Expression"
 										}

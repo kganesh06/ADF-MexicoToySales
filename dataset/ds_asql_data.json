@@ -1,0 +1,17 @@
+{
+	"name": "ds_asql_data",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_asql_mexico_db",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"TableName": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": []
+	}
+}
