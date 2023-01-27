@@ -36,31 +36,31 @@
 			"sinks": [
 				{
 					"dataset": {
-						"referenceName": "ds_asql_products",
-						"type": "DatasetReference"
-					},
-					"name": "processdata"
-				},
-				{
-					"dataset": {
 						"referenceName": "ds_adls_processdata_sales",
 						"type": "DatasetReference"
 					},
-					"name": "sink1"
+					"name": "loadtosales"
 				},
 				{
 					"dataset": {
-						"referenceName": "ds_adls_processdata_inv",
+						"referenceName": "ds_asql_inv",
 						"type": "DatasetReference"
 					},
-					"name": "sink2"
+					"name": "loadtoInventory"
 				},
 				{
 					"dataset": {
-						"referenceName": "ds_adls_processdata_stores",
+						"referenceName": "ds_asql_stores",
 						"type": "DatasetReference"
 					},
-					"name": "sink3"
+					"name": "loadtoStores"
+				},
+				{
+					"dataset": {
+						"referenceName": "ds_asql_products",
+						"type": "DatasetReference"
+					},
+					"name": "loadtoproducts"
 				}
 			],
 			"transformations": [
@@ -74,22 +74,25 @@
 					"name": "removeNullSales"
 				},
 				{
-					"name": "join1"
+					"name": "joinwithproducts"
 				},
 				{
-					"name": "select1"
+					"name": "selectcols"
 				},
 				{
-					"name": "derivedColumn1"
+					"name": "dateclean"
 				},
 				{
-					"name": "derivedColumn2"
+					"name": "totalcost"
 				},
 				{
-					"name": "derivedColumn3"
+					"name": "costPerSale"
 				},
 				{
 					"name": "removeduplicates"
+				},
+				{
+					"name": "changdatatypes"
 				}
 			],
 			"scriptLines": [
@@ -97,8 +100,8 @@
 				"          Product_ID as string,",
 				"          Product_Name as string,",
 				"          Product_Category as string,",
-				"          Product_Cost as decimal(10,0),",
-				"          Product_Price as decimal(10,0)",
+				"          Product_Cost as double,",
+				"          Product_Price as double",
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
@@ -136,14 +139,14 @@
 				"     ignoreNoFilesFound: false,",
 				"     skipLines: 1) ~> getStores",
 				"getProducts filter(not(((isNull(Product_ID)) || isNull(Product_Name) || Product_ID==\"\" || Product_Name==\"\"))) ~> removeNullValues",
-				"removeNullValues derive(Product_Cost = iif(isNull(Product_Cost), toDecimal(0), Product_Cost)) ~> replacenulls",
+				"removeNullValues derive(Product_Cost = iif(isNull(Product_Cost), toDouble(0), Product_Cost)) ~> replacenulls",
 				"getSales filter(not(isNull(Sale_ID) || Sale_ID==\"\")) ~> removeNullSales",
-				"derivedColumn1, replacenulls join(getSales@Product_ID == getProducts@Product_ID,",
+				"dateclean, replacenulls join(getSales@Product_ID == getProducts@Product_ID,",
 				"     joinType:'left',",
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
-				"     broadcast: 'auto')~> join1",
-				"join1 select(mapColumn(",
+				"     broadcast: 'auto')~> joinwithproducts",
+				"joinwithproducts select(mapColumn(",
 				"          Sale_ID,",
 				"          Date,",
 				"          Store_ID,",
@@ -153,14 +156,70 @@
 				"          Product_Price",
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> select1",
-				"removeNullSales derive(Date = toDate(regexReplace(toString(Date), '[a-zA-Z]+',''))) ~> derivedColumn1",
-				"select1 derive(TotalSales = toDouble(Units) * Product_Price,",
-				"          CostPerSale = toDouble(Units) * Product_Cost) ~> derivedColumn2",
-				"derivedColumn2 derive(ProfitPerSale = TotalSales - CostPerSale) ~> derivedColumn3",
+				"     skipDuplicateMapOutputs: true) ~> selectcols",
+				"removeNullSales derive(Date = toDate(regexReplace(toString(Date), '[a-zA-Z]+',''))) ~> dateclean",
+				"selectcols derive(TotalSales = toDouble(Units) * Product_Price,",
+				"          CostPerSale = toDouble(Units) * Product_Cost) ~> totalcost",
+				"totalcost derive(ProfitPerSale = TotalSales - CostPerSale) ~> costPerSale",
 				"getStores aggregate(groupBy(Store_ID),",
 				"     each(match(name!='Store_ID'), $$ = first($$))) ~> removeduplicates",
-				"replacenulls sink(allowSchemaDrift: true,",
+				"replacenulls cast(output(",
+				"          Product_ID as string,",
+				"          Product_Name as string,",
+				"          Product_Category as string,",
+				"          Product_Cost as string,",
+				"          Product_Price as string",
+				"     ),",
+				"     errors: true) ~> changdatatypes",
+				"costPerSale sink(allowSchemaDrift: true,",
+				"     validateSchema: true,",
+				"     partitionFileNames:['sales.csv'],",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> loadtosales",
+				"getInventory sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          Store_ID as string,",
+				"          Product_ID as string,",
+				"          Stock_On_Hand as integer",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     truncate:true,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     partitionBy('hash', 1),",
+				"     preCommands: [],",
+				"     postCommands: []) ~> loadtoInventory",
+				"removeduplicates sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          Store_ID as string,",
+				"          Store_Name as string,",
+				"          Store_City as string,",
+				"          Store_Location as string,",
+				"          Store_Open_Date as date",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     partitionBy('hash', 1),",
+				"     preCommands: [],",
+				"     postCommands: []) ~> loadtoStores",
+				"changdatatypes sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
 				"          Product_ID as string,",
@@ -173,48 +232,10 @@
 				"     insertable:true,",
 				"     updateable:false,",
 				"     upsertable:false,",
-				"     truncate:true,",
 				"     format: 'table',",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
-				"     errorHandlingOption: 'stopOnFirstError',",
-				"     mapColumn(",
-				"          Product_ID,",
-				"          Product_Name,",
-				"          Product_Category,",
-				"          Product_Cost,",
-				"          Product_Price",
-				"     ),",
-				"     partitionBy('hash', 1),",
-				"     preCommands: [],",
-				"     postCommands: []) ~> processdata",
-				"derivedColumn3 sink(allowSchemaDrift: true,",
-				"     validateSchema: true,",
-				"     partitionFileNames:['sales.csv'],",
-				"     umask: 0022,",
-				"     preCommands: [],",
-				"     postCommands: [],",
-				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true,",
-				"     partitionBy('hash', 1)) ~> sink1",
-				"getInventory sink(allowSchemaDrift: true,",
-				"     validateSchema: false,",
-				"     partitionFileNames:['inventory.csv'],",
-				"     umask: 0022,",
-				"     preCommands: [],",
-				"     postCommands: [],",
-				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true,",
-				"     partitionBy('hash', 1)) ~> sink2",
-				"removeduplicates sink(allowSchemaDrift: true,",
-				"     validateSchema: false,",
-				"     partitionFileNames:['stores.csv'],",
-				"     umask: 0022,",
-				"     preCommands: [],",
-				"     postCommands: [],",
-				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true,",
-				"     partitionBy('hash', 1)) ~> sink3"
+				"     errorHandlingOption: 'stopOnFirstError') ~> loadtoproducts"
 			]
 		}
 	}

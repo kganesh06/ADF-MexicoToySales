@@ -1,5 +1,5 @@
 {
-	"name": "ds_asql_products",
+	"name": "ds_asql_stores",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "ls_asql_mexico_db",
@@ -9,33 +9,29 @@
 		"type": "AzureSqlTable",
 		"schema": [
 			{
-				"name": "Product_ID",
+				"name": "Store_ID",
 				"type": "varchar"
 			},
 			{
-				"name": "Product_Name",
+				"name": "Store_Name",
 				"type": "varchar"
 			},
 			{
-				"name": "Product_Category",
+				"name": "Store_City",
 				"type": "varchar"
 			},
 			{
-				"name": "Product_Cost",
-				"type": "decimal",
-				"precision": 3,
-				"scale": 2
+				"name": "Store_Location",
+				"type": "varchar"
 			},
 			{
-				"name": "Product_Price",
-				"type": "decimal",
-				"precision": 3,
-				"scale": 2
+				"name": "Store_Open_Date",
+				"type": "date"
 			}
 		],
 		"typeProperties": {
 			"schema": "dbo",
-			"table": "Products"
+			"table": "store"
 		}
 	}
 }
