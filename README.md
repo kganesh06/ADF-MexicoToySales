@@ -12,13 +12,14 @@ Steps -
 
 4- Used Dataflow to for Data Cleaning and adding conditional columns.
 
-4.1- Data Cleansing - 
-	a. Null value check
-	b. Date format check
-	c. Data Types
-4.2- Data Transformation
-	a. Join Operation
-	b. New columns based on condition
+	4.1- Data Cleansing - 
+		a. Null value check
+		b. Date format check
+		c. Data Types
+	4.2- Data Transformation
+		a. Join Operation
+		b. New columns based on condition
+		
 5- Loaded Processed Data in ADLSGen2 Folder using Copy data Activity
 
 6- Used Create scripts to create tables in Azure SQL Database
